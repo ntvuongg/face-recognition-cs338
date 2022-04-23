@@ -24,8 +24,8 @@ def image_preprocess(img):
     x = preprocess_input(x)
     return x
 
-def extract_vector(model, image_path):
-    img = Image.open(image_path)
+def extract_vector(model, img):
+    # img = Image.open(image_path)
     img_tensor = image_preprocess(img)
 
     # Features extraction
@@ -37,10 +37,10 @@ def extract_vector(model, image_path):
 model = get_extract_model()
 
 mtcnn = MTCNN(thresholds= [0.7, 0.7, 0.8] ,keep_all=True, device = device)
-# mr_hoang = extract_vector(model,'faces/3.jpg')
-thanh = extract_vector(model,'faces/2.jpg')
-vuong = extract_vector(model, 'faces/1.jpg')
-tung = extract_vector(model, 'faces/0.jpg')
+
+thanh = extract_vector(model, Image.open('faces/2.jpg'))
+vuong = extract_vector(model, Image.open('faces/1.jpg'))
+tung = extract_vector(model, Image.open('faces/0.jpg'))
 vectors = np.array([tung, vuong, thanh])
 
 cap = cv2.VideoCapture(0)
@@ -56,12 +56,15 @@ while cap.isOpened():
         if boxes is not None:
             for box in boxes:
                 bbox = list(map(int,box.tolist()))
-
-            cv2.imwrite('frame.png', frame)
-            thanh_img = Image.open('frame.png')
-            crop_img = thanh_img.crop((bbox[0],bbox[1],bbox[2],bbox[3]))
-            crop_img.save('frame.png')
-            search_vector = extract_vector(model, './frame.png')
+            
+            frame_copy = frame.copy()
+            frame_RGB = cv2.cvtColor(frame_copy, cv2.COLOR_BGR2RGB)
+            frame_copy = Image.fromarray(frame_RGB)
+            # cv2.imwrite('frame.png', frame)
+            # thanh_img = Image.open('frame.png')
+            crop_img = frame_copy.crop((bbox[0],bbox[1],bbox[2],bbox[3]))
+            # crop_img.save('frame.png')
+            search_vector = extract_vector(model, crop_img)
             # distance = np.linalg.norm(vectors - search_vector, axis=1)
             idx = []
             for person in vectors:
